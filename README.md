@@ -3,7 +3,38 @@
 <img src="https://github.com/soumik12345/colorization-using-optimization/workflows/test/badge.svg" alt="build-failing">
 
 Python and C++ implementations of a user-guided image/video colorization technique as proposed by the paper 
-[Colorization Using Optimization](https://dl.acm.org/doi/10.1145/1015706.1015780).
+[Colorization Using Optimization](https://dl.acm.org/doi/10.1145/1015706.1015780). The algorithm is based on a simple premise; neighboring pixels in space-time that have similar intensities should have similar colors. This premise is formalized using a quadratic cost function and obtain an optimization problem that can be solved efficiently using standard techniques. While using this alogorithm, an artist only needs to annotate the image with a few color scribbles or visual clues, and the indicated colors are automatically propagated in both space and time to produce a fully colorized image or sequence. The annotation can be done using any drawing tool such as [JSPaint](https://jspaint.app/) or [Gimp](https://www.gimp.org/).
+
+## Instructions
+
+### Instructions for running python version
+
+1. Create a virtualenv using:
+    - `virtualenv venv --python=python3`
+    - `source venv/bin/activate`
+    - `pip install -r requirements.txt`
+
+2. Colorize images using the CLI:
+    ```
+    Options:
+        --original_image TEXT    Original Image Path
+        --visual_clue TEXT       Visual Clue Image Path
+        --result_path TEXT       Colorized Image Path (without file extensions)
+        -i, --use_itercative     Use Iterative Mode
+        --epochs INTEGER         Number of epochs for Iterative Mode
+        --log_intervals INTEGER  Log Interval
+        --help                   Show this message and exit.
+    ```
+
+### Instructions to build C++ version
+
+1. Install dependencies using `sh install.sh`
+
+2. Create a build directory `mkdir build && cd build`
+
+3. Generate makefiles and compile using `cmake .. && make`
+
+4. Run the executable using `./colorization [input-image] [visual-clues] [result] [gamma] [threshold]`
 
 ## Results
 
