@@ -13,8 +13,8 @@ from .utils import position_to_id, find_neighbour
 class Colorizer:
 
     def __init__(self, gray_image_file: str, visual_clues_file: str) -> None:
-        self.original_gray_image = self.gray_image = cv2.imread(gray_image_file)
-        self.original_visual_clues = self.visual_clues = cv2.imread(visual_clues_file)
+        self.original_gray_image = self.gray_image = cv2.cvtColor(cv2.imread(gray_image_file), cv2.COLOR_BGR2RGB)
+        self.original_visual_clues = self.visual_clues = cv2.cvtColor(cv2.imread(visual_clues_file), cv2.COLOR_BGR2RGB)
     
     def _preprocess(self):
         self.gray_image = cv2.cvtColor(

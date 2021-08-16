@@ -16,9 +16,9 @@ from .utils import affinity_a, to_seq
 class IterativeColorizer:
 
     def __init__(self, original_image: str, visual_clues: str) -> None:
-        self.image_oiginal_rgb = cv2.imread(original_image)
+        self.image_oiginal_rgb = cv2.cvtColor(cv2.imread(original_image), cv2.COLOR_BGR2RGB)
         self.image_original = self.image_oiginal_rgb.astype(float) / 255
-        self.image_clues_rgb = cv2.imread(visual_clues)
+        self.image_clues_rgb = cv2.cvtColor(cv2.imread(visual_clues), cv2.COLOR_BGR2RGB)
         self.image_clues = self.image_clues_rgb.astype(float) / 255
         self.result_history = []
     

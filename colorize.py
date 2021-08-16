@@ -20,7 +20,10 @@ def colorize(original_image, visual_clue, result_path, use_itercative, epochs, l
         colorizer.plot_inputs()
         result = colorizer.colorize()
         colorizer.plot_results(result)
-        cv2.imwrite(result_path + '.png', result)
+        cv2.imwrite(
+            result_path + '.png',
+            cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
+        )
     else:
         colorizer = IterativeColorizer(
             original_image=original_image,
@@ -32,7 +35,10 @@ def colorize(original_image, visual_clue, result_path, use_itercative, epochs, l
         )
         colorizer.plot_results(log_intervals=log_intervals)
         for i, result in enumerate(colorizer.result_history):
-            cv2.imwrite(result_path + '{}.png'.format(i + 1), result)
+            cv2.imwrite(
+                result_path + '{}.png'.format(i + 1),
+                cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
+            )
 
 
 if __name__ == '__main__':
