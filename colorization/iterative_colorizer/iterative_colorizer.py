@@ -1,4 +1,3 @@
-import cv2
 import scipy
 import colorsys
 import numpy as np

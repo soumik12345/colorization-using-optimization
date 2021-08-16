@@ -1,0 +1,27 @@
+name: test
+on:
+  push:
+    branches:
+      - master
+      - feature/colorizer
+    paths:
+      - .github/**
+      - colorization/**
+      - tests.py
+  pull_request:
+    branches:
+      - master
+      - feature/colorizer
+    paths:
+      - .github/**
+      - colorization/**
+      - tests.py
+jobs:
+  testing-on-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: |
+          pip install -U pip
+          pip install -r requirements.txt
+          pytest tests.py -s
