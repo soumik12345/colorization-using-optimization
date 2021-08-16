@@ -13,8 +13,8 @@ from .utils import position_to_id, find_neighbour
 class Colorizer:
 
     def __init__(self, gray_image_file: str, visual_clues_file: str) -> None:
-        self.original_gray_image = self.gray_image = np.array(Image.open(gray_image_file))
-        self.original_visual_clues = self.visual_clues = np.array(Image.open(visual_clues_file))
+        self.original_gray_image = self.gray_image = cv2.imread(gray_image_file)
+        self.original_visual_clues = self.visual_clues = cv2.imread(visual_clues_file)
     
     def _preprocess(self):
         self.gray_image = cv2.cvtColor(
@@ -47,7 +47,7 @@ class Colorizer:
     
     def colorize(self) -> np.ndarray:
         self._preprocess()
-        n, m = self.gray_image.shape[0], self.gray_image.shape[1]
+        n, m = self.visual_clues.shape[0], self.visual_clues.shape[1]
         size = n * m
         W = sparse.lil_matrix((size, size), dtype = float)
         b1 = np.zeros(shape = (size))
