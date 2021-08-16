@@ -15,10 +15,8 @@ from .utils import affinity_a, to_seq
 class IterativeColorizer:
 
     def __init__(self, original_image: str, visual_clues: str) -> None:
-        # self.image_oiginal_rgb = cv2.imread(original_image)
         self.image_oiginal_rgb = np.array(Image.open(original_image))
         self.image_original = self.image_oiginal_rgb.astype(float) / 255
-        # self.image_clues_rgb = imread(visual_clues)
         self.image_clues_rgb = np.array(Image.open(visual_clues))
         self.image_clues = self.image_clues_rgb.astype(float) / 255
         self.result_history = []
@@ -121,10 +119,3 @@ class IterativeColorizer:
             weight_matrix, b_u, b_v,
             epoch=epochs, interval=log_interval
         )
-        # self.result_u = spsolve(weight_matrix, b_u)
-        # self.result_v = spsolve(weight_matrix, b_v)
-        # self.result_history.append(
-        #     self.yuv_channels_to_rgb(
-        #         self.result_y, self.result_u, self.result_v
-        #     )
-        # )

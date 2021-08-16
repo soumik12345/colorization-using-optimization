@@ -4,6 +4,7 @@ on:
     branches:
       - master
       - feature/colorizer
+      - feature/cpp-implementation
     paths:
       - .github/**
       - colorization/**

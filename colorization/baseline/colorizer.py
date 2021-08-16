@@ -47,7 +47,7 @@ class Colorizer:
     
     def colorize(self) -> np.ndarray:
         self._preprocess()
-        n, m = self.gray_image.shape[0], self.gray_image.shape[1]
+        n, m = self.visual_clues.shape[0], self.visual_clues.shape[1]
         size = n * m
         W = sparse.lil_matrix((size, size), dtype = float)
         b1 = np.zeros(shape = (size))
