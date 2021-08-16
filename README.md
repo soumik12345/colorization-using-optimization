@@ -26,6 +26,8 @@ Python and C++ implementations of a user-guided image/video colorization techniq
         --help                   Show this message and exit.
     ```
 
+3. Alternatively, you can run on Google Colab using <a href="https://colab.research.google.com/github/soumik12345/colorization-using-optimization/blob/master/Demo.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
+
 ### Instructions to build C++ version
 
 1. Install dependencies using `sh install.sh`
@@ -35,6 +37,8 @@ Python and C++ implementations of a user-guided image/video colorization techniq
 3. Generate makefiles and compile using `cmake .. && make`
 
 4. Run the executable using `./colorization [input-image] [visual-clues] [result] [gamma] [threshold]`
+
+5. Alternatively, you can download the executable from [here](https://github.com/soumik12345/colorization-using-optimization/releases/download/0.1/colorization) and run it (installation of dependencies is still needed).
 
 ## Results
 
