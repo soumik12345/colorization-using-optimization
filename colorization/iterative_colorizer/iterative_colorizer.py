@@ -2,8 +2,9 @@ import cv2
 import scipy
 import colorsys
 import numpy as np
+from PIL import Image
 from tqdm import tqdm
-from typing import Tuple
+from typing import Tuple, List
 from skimage.io import imread
 from matplotlib import pyplot as plt
 from scipy.sparse.linalg import spsolve
@@ -15,10 +16,13 @@ from .utils import affinity_a, to_seq
 class IterativeColorizer:
 
     def __init__(self, original_image: str, visual_clues: str) -> None:
-        self.image_oiginal_rgb = cv2.imread(original_image)
+        # self.image_oiginal_rgb = cv2.imread(original_image)
+        self.image_oiginal_rgb = np.array(Image.open(original_image))
         self.image_original = self.image_oiginal_rgb.astype(float) / 255
-        self.image_clues_rgb = imread(visual_clues)
+        # self.image_clues_rgb = imread(visual_clues)
+        self.image_clues_rgb = np.array(Image.open(visual_clues))
         self.image_clues = self.image_clues_rgb.astype(float) / 255
+        self.result_history = []
     
     def plot_inputs(self, figure_size: Tuple[int, int] = (12, 12)) -> None:
         figure = plt.figure(figsize=figure_size)
@@ -30,18 +34,14 @@ class IterativeColorizer:
         plt.axis('off')
         plt.show()
     
-    def plot_results(self, result: np.ndarray) -> None:
-        fig = plt.figure(figsize=(25, 17))
-        fig.add_subplot(1, 3, 1).set_title('Black & White')
-        plt.imshow(self.image_original)
-        plt.axis('off')
-        fig.add_subplot(1, 3, 2).set_title('Color Hints')
-        plt.imshow(self.image_clues)
-        plt.axis('off')
-        fig.add_subplot(1, 3, 3).set_title('Colorized')
-        plt.imshow(result)
-        plt.axis('off')
-        plt.show()
+    def plot_results(self, log_interval: int = 100) -> None:
+        index = log_interval
+        for result in self.result_history[:-1]:
+            plt.imshow(result)
+            plt.title('Result of Iteration: {}'.format(index))
+            plt.axis('off')
+            plt.show()
+            index += log_interval
     
     def yuv_channels_to_rgb(self, channel_y, channel_u, channel_v) -> np.ndarray:
         """Combine 3 channels of YUV to a RGB photo: n x n x 3 array"""
@@ -52,10 +52,26 @@ class IterativeColorizer:
         image_rgb = np.zeros(self.image_yuv.shape)
         image_rgb[:, :, 0] = result_rgb[:, 0].reshape(self.image_rows, self.image_cols, order='F')
         image_rgb[:, :, 1] = result_rgb[:, 1].reshape(self.image_rows, self.image_cols, order='F')
-        image_rgb[:, :, 2] = result_rgb[:, 2].reshape(self.picimage_rows_rows, self.image_cols, order='F')
+        image_rgb[:, :, 2] = result_rgb[:, 2].reshape(self.image_rows, self.image_cols, order='F')
         return image_rgb
     
-    def colorize(self) -> np.ndarray:
+    def jacobi(self, weight_matrix, b_u, b_v, epoch: int, interval: int) -> None:
+        D_u = weight_matrix.diagonal()
+        D_v = weight_matrix.diagonal()
+        R_u = weight_matrix - scipy.sparse.diags(D_u)
+        R_v = weight_matrix - scipy.sparse.diags(D_v)
+        x_u = np.zeros(weight_matrix.shape[0])
+        x_v = np.zeros(weight_matrix.shape[0])
+        print('Optimizing iteratively...')
+        for epoch in tqdm(range(1, epoch + 1)):
+            x_u = (b_u - R_u.dot(x_u)) / D_u
+            x_v = (b_v - R_v.dot(x_v)) / D_v
+            if epoch % interval == 0:
+                self.result_history.append(
+                    self.yuv_channels_to_rgb(self.result_y, x_u, x_v))
+            
+    
+    def colorize(self, epochs: int = 500, log_interval: int = 100) -> None:
         (self.image_rows, self.image_cols, _) = self.image_original.shape
         image_size = self.image_rows * self.image_cols
         channel_Y, _, _ = colorsys.rgb_to_yiq(
@@ -71,11 +87,9 @@ class IterativeColorizer:
         map_colored = (abs(channel_U) + abs(channel_V)) > 0.0001
         self.image_yuv = np.dstack((channel_Y, channel_U, channel_V))
         weight_data = []
-        # num_pixel_bw = 0
         wd_width = 1
-        progress_bar = tqdm(range(self.image_cols))
-        progress_bar.set_description('Finding neighbouring pixels...')
-        for c in progress_bar:
+        print('Finding neighbouring pixels...')
+        for c in tqdm(range(self.image_cols)):
             for r in range(self.image_rows):
                 window_neighbour = WindowNeighbor(wd_width, (r, c), self.image_yuv)
                 if not map_colored[r,c]:
@@ -103,8 +117,15 @@ class IterativeColorizer:
         b_u[idx_colored] = pic_u_flat[idx_colored]
         pic_v_flat = self.image_yuv[:,:,2].reshape(image_size, order='F')
         b_v[idx_colored] = pic_v_flat[idx_colored]
-        self.result_y = self.image_yuv[:,:,0].reshape(image_size, order='F')
-        self.result_u = spsolve(weight_matrix, b_u)
-        self.result_v = spsolve(weight_matrix, b_v)
-        result = self.yuv_channels_to_rgb(self.result_y, self.result_u, self.result_v)
-        return result
+        self.result_y = self.image_yuv[:, :, 0].reshape(image_size, order='F')
+        self.jacobi(
+            weight_matrix, b_u, b_v,
+            epoch=epochs, interval=log_interval
+        )
+        # self.result_u = spsolve(weight_matrix, b_u)
+        # self.result_v = spsolve(weight_matrix, b_v)
+        # self.result_history.append(
+        #     self.yuv_channels_to_rgb(
+        #         self.result_y, self.result_u, self.result_v
+        #     )
+        # )
