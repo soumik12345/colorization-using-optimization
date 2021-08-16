@@ -8,14 +8,7 @@ on:
       - .github/**
       - colorization/**
       - tests.py
-  pull_request:
-    branches:
-      - master
-      - feature/colorizer
-    paths:
-      - .github/**
-      - colorization/**
-      - tests.py
+      - requirements.txt
 jobs:
   testing-on-linux:
     runs-on: ubuntu-latest
