@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
     }
 
     assert(image.size() == visual_clues.size());
-    cv::Mat mask = colorization::getScribbleMask(image, visual_clues, threshold);
+    cv::Mat mask = colorization::getVisualClueMask(image, visual_clues, threshold);
     cv::Mat colorImage = colorization::colorize(image, visual_clues, mask, gamma);
     cv::imwrite(resultPath, colorImage);
     return 0;

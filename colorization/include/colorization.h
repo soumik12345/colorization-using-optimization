@@ -17,6 +17,8 @@
 #include <Eigen/Sparse>
 #include <Eigen/IterativeLinearSolvers>
 
+#include <cpptqdm/tqdm.h>
+
 
 namespace colorization {
 
@@ -27,9 +29,9 @@ namespace colorization {
     }
 
 
-    cv::Mat getScribbleMask(const cv::Mat& image, const cv::Mat& scribbles, double eps = 1, int nErosions=1) {
+    cv::Mat getVisualClueMask(const cv::Mat& image, const cv::Mat& visual_clues, double eps = 1, int nErosions=1) {
         cv::Mat diff;
-        cv::absdiff(image, scribbles, diff);
+        cv::absdiff(image, visual_clues, diff);
         std::vector<cv::Mat> channels;
         cv::split(diff, channels);
         cv::Mat mask = channels[0] + channels[1] + channels[2];
@@ -39,8 +41,7 @@ namespace colorization {
     }
 
 
-    template <typename T>
-    inline T squaredDifference(const std::vector<T>& X, int r, int s) {
+    template <typename T> inline T squaredDifference(const std::vector<T>& X, int r, int s) {
         return (X[r] - X[s]) * (X[r] - X[s]);
     }
 
@@ -58,8 +59,7 @@ namespace colorization {
     }
 
 
-    template <typename T>
-    T variance(const std::vector<T>& values, T eps=0.01) {
+    template <typename T> T variance(const std::vector<T>& values, T eps=0.01) {
         T sum = 0;
         T squaredSum = 0;
         for (auto v : values) {
@@ -89,8 +89,7 @@ namespace colorization {
     }
 
 
-    template <typename Ti, typename Tw>
-    inline void getWeights(
+    template <typename Ti, typename Tw> inline void getWeights(
             const std::vector<Tw>& values, Ti r,
             const std::vector<Ti>& neighbors, std::vector<Tw>& neighborsWeights, Tw gamma) {
         neighborsWeights.clear();
@@ -114,12 +113,12 @@ namespace colorization {
     }
 
 
-    void setupProblem(const cv::Mat& Y, const cv::Mat& scribbles, const cv::Mat& mask,
-                      Eigen::SparseMatrix<double, Eigen::RowMajor>& A, Eigen::VectorXd& bu,
-                      Eigen::VectorXd& bv, double gamma)
-    {
-        typedef Eigen::Triplet<double> TD;
+    void setupProblem(
+            const cv::Mat& Y, const cv::Mat& visualClues, const cv::Mat& mask,
+            Eigen::SparseMatrix<double, Eigen::RowMajor>& A, Eigen::VectorXd& bu,
+            Eigen::VectorXd& bv, double gamma) {
 
+        typedef Eigen::Triplet<double> TD;
         auto nRows = Y.rows;
         auto nCols = Y.cols;
         auto nPixels = nRows * nCols;
@@ -130,11 +129,11 @@ namespace colorization {
         bv.resize(nPixels);
         bu.setZero();
         bv.setZero();
-        cv::Mat yuvScribbles;
-        cv::cvtColor(scribbles, yuvScribbles, cv::COLOR_BGR2YUV);
-        yuvScribbles.convertTo(yuvScribbles, CV_64FC3);
+        cv::Mat yuvVisualClues;
+        cv::cvtColor(visualClues, yuvVisualClues, cv::COLOR_BGR2YUV);
+        yuvVisualClues.convertTo(yuvVisualClues, CV_64FC3);
         std::vector<cv::Mat> channels;
-        cv::split(yuvScribbles, channels);
+        cv::split(yuvVisualClues, channels);
         cv::Mat& U = channels[1];
         cv::Mat& V = channels[2];
         std::vector<double> y, u, v;
@@ -148,7 +147,10 @@ namespace colorization {
         weights.reserve(numNeighbors);
         std::vector<unsigned long> neighbors;
         neighbors.reserve(numNeighbors);
+        std::cout << "Finding Neighbours..." << std::endl;
+        tqdm progressBar;
         for (auto i = 0; i < nRows; ++i) {
+            progressBar.progress(i, nRows);
             for (auto j = 0; j < nCols; ++j) {
                 unsigned long r = i * nCols + j;
                 getNeighbours(i, j, nRows, nCols, neighbors);
@@ -167,12 +169,13 @@ namespace colorization {
                 }
             }
         }
+        progressBar.finish();
         A.setFromTriplets(coefficients.begin(), coefficients.end());
     }
 
 
     cv::Mat colorize(
-            const cv::Mat& image, const cv::Mat& scribbles,
+            const cv::Mat& image, const cv::Mat& visualClues,
             const cv::Mat& mask, double gamma=2.0) {
         cv::Mat yuvImage;
         cv::cvtColor(image, yuvImage, cv::COLOR_BGR2YUV);
@@ -184,16 +187,16 @@ namespace colorization {
         Eigen::SparseMatrix<double, Eigen::RowMajor> A;
         Eigen::VectorXd bu;
         Eigen::VectorXd bv;
-        setupProblem(Y, scribbles, mask, A, bu, bv, gamma);
+        setupProblem(Y, visualClues, mask, A, bu, bv, gamma);
         // Solve for U, V channels
-        std::cout << "Solving for U channel." << std::endl;
+        std::cout << "Solving for U channel..." << std::endl;
         Eigen::BiCGSTAB<Eigen::SparseMatrix<double>,
                 Eigen::DiagonalPreconditioner<double> > solver;
         solver.compute(A);
         Eigen::VectorXd U = solver.solve(bu);
         if (solver.info() != Eigen::Success)
             throw std::runtime_error("Failed to solve for U channel.");
-        std::cout << "Solving for V channel." << std::endl;
+        std::cout << "Solving for V channel..." << std::endl;
         Eigen::VectorXd V = solver.solve(bv);
         if (solver.info() != Eigen::Success)
             throw std::runtime_error("Failed to solve for V channel.");

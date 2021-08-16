@@ -1,0 +1,3 @@
+[submodule "colorization/include/cpptqdm"]
+	path = colorization/include/cpptqdm
+	url = https://github.com/aminnj/cpptqdm
