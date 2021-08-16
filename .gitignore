@@ -1,4 +1,7 @@
 venv/
+.idea/
+build/
 .vscode/
 **pycache**
 .ipynb_checkpoints/
+cmake-build-debug/
