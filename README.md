@@ -16,6 +16,8 @@ Python and C++ implementations of a user-guided image/video colorization techniq
 
 2. Colorize images using the CLI:
     ```
+    python colorize.py
+    
     Options:
         --original_image TEXT    Original Image Path
         --visual_clue TEXT       Visual Clue Image Path
